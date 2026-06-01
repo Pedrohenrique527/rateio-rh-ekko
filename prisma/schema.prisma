@@ -1,0 +1,184 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  RH
+  FINANCEIRO
+  VISUALIZACAO
+}
+
+enum EmployeeStatus {
+  ATIVO
+  INATIVO
+  AFASTADO
+  DEMITIDO
+}
+
+enum CompetenceStatus {
+  ABERTA
+  IMPORTADA
+  CONFERIDA
+  FECHADA
+}
+
+model User {
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique
+  passwordHash String
+  role         UserRole
+  active       Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  auditLogs    AuditLog[]
+}
+
+model Unit {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  active    Boolean    @default(true)
+  employees Employee[]
+  payrolls  PayrollEntry[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Employee {
+  id             String            @id @default(cuid())
+  registration   String?           @unique
+  name           String
+  cpf            String            @unique
+  admissionDate  DateTime?
+  role           String?
+  salary         Decimal?          @db.Decimal(14, 4)
+  department     String?
+  unitId         String
+  unit           Unit              @relation(fields: [unitId], references: [id])
+  schedule       String?
+  contractType   String?
+  status         EmployeeStatus    @default(ATIVO)
+  unionName      String?
+  hasTransport   Boolean           @default(false)
+  hasMealBenefit Boolean           @default(false)
+  hasLoan        Boolean           @default(false)
+  notes          String?
+  salaryHistory  SalaryHistory[]
+  payrollEntries PayrollEntry[]
+  documents      EmployeeDocument[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+}
+
+model SalaryHistory {
+  id          String   @id @default(cuid())
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  competenceId String?
+  amount      Decimal  @db.Decimal(14, 4)
+  reason      String?
+  createdAt   DateTime @default(now())
+}
+
+model EmployeeDocument {
+  id         String   @id @default(cuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  fileName   String
+  fileUrl    String
+  type       String
+  createdAt  DateTime @default(now())
+}
+
+model Competence {
+  id          String           @id @default(cuid())
+  month       Int
+  year        Int
+  status      CompetenceStatus @default(ABERTA)
+  closedAt    DateTime?
+  closedById  String?
+  payrolls    PayrollEntry[]
+  charges     ChargeEntry[]
+  allocations Allocation[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([month, year])
+}
+
+model PayrollEntry {
+  id                   String     @id @default(cuid())
+  competenceId          String
+  competence            Competence @relation(fields: [competenceId], references: [id])
+  employeeId            String
+  employee              Employee   @relation(fields: [employeeId], references: [id])
+  unitId                String
+  unit                  Unit       @relation(fields: [unitId], references: [id])
+  grossSalary           Decimal    @db.Decimal(14, 4)
+  inssBase              Decimal    @db.Decimal(14, 4)
+  fgtsBase              Decimal    @db.Decimal(14, 4)
+  employeeInssDiscount  Decimal    @db.Decimal(14, 4)
+  irrfDiscount          Decimal    @db.Decimal(14, 4)
+  fgts                  Decimal    @db.Decimal(14, 4)
+  consignedLoan         Decimal    @db.Decimal(14, 4) @default(0)
+  additions             Decimal    @db.Decimal(14, 4) @default(0)
+  discounts             Decimal    @db.Decimal(14, 4) @default(0)
+  sourceRowHash         String
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+
+  @@unique([competenceId, employeeId])
+}
+
+model ChargeEntry {
+  id          String     @id @default(cuid())
+  competenceId String
+  competence   Competence @relation(fields: [competenceId], references: [id])
+  label       String
+  base        Decimal    @db.Decimal(14, 4)
+  rate        Decimal    @db.Decimal(10, 6)
+  amount      Decimal    @db.Decimal(14, 4)
+  createdAt   DateTime   @default(now())
+}
+
+model Allocation {
+  id                    String     @id @default(cuid())
+  competenceId           String
+  competence             Competence @relation(fields: [competenceId], references: [id])
+  unitName               String
+  employeeInssDiscount   Decimal    @db.Decimal(14, 4)
+  employerInss           Decimal    @db.Decimal(14, 4)
+  gilrat                 Decimal    @db.Decimal(14, 4)
+  terceiros              Decimal    @db.Decimal(14, 4)
+  irrfPayroll            Decimal    @db.Decimal(14, 4)
+  total                  Decimal    @db.Decimal(14, 4)
+  createdAt              DateTime   @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  entity    String
+  entityId  String?
+  before    Json?
+  after     Json?
+  metadata  Json?
+  createdAt DateTime @default(now())
+}
+
+model MonthlySnapshot {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  payload   Json
+  closed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
