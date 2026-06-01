@@ -1,0 +1,48 @@
+RATEIO RH EKKO REVESTIMENTOS
+Como abrir o sistema para apresentacao
+
+1. Extraia/descompacte o arquivo ZIP.
+
+2. Instale o Node.js, se o computador ainda nao tiver:
+   https://nodejs.org
+   Use a versao LTS.
+
+3. Abra o PowerShell dentro da pasta do sistema.
+
+4. Rode este comando uma vez para instalar:
+   npm.cmd install
+
+5. Depois rode este comando para ligar o site:
+   npm.cmd run dev -- --hostname 0.0.0.0 --port 3000
+
+6. Abra no Google Chrome:
+   http://127.0.0.1:3000
+
+7. Login de demonstracao:
+   E-mail: admin@ekko.local
+   Senha: Ekko@2026
+
+O que ja da para apresentar:
+- Login funcionando.
+- Dashboard.
+- Competencias de 06/2025 ate o mes atual.
+- Criacao de novos meses futuros.
+- Cadastro manual de funcionarios/lancamentos.
+- Edicao e remocao do que foi criado.
+- Calculos de folha, FGTS, INSS, IRRF, patronal, terceiros e GILRAT.
+- Rateio por unidade.
+- Conferencia DCTFWeb.
+- Exportacao de relatorios.
+- Testes automaticos comparando o motor de calculo com a planilha original.
+
+Importante:
+Este pacote serve para demonstracao e validacao local.
+Para o RH usar todos os dias pela internet, com varios usuarios e banco online,
+publique usando o guia DEPLOY_PRODUCAO.md.
+
+Antes de usar em producao:
+- trocar a senha;
+- configurar banco PostgreSQL online;
+- configurar JWT_SECRET seguro;
+- validar todos os valores com o fechamento real da empresa;
+- manter backup e auditoria ligados.
